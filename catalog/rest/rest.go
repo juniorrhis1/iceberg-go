@@ -133,11 +133,16 @@ func (t *commitTableResponse) UnmarshalJSON(b []byte) (err error) {
 	return err
 }
 
+type storageCredential struct {
+	Config iceberg.Properties `json:"config"`
+}
+
 type loadTableResponse struct {
-	MetadataLoc string             `json:"metadata-location"`
-	RawMetadata json.RawMessage    `json:"metadata"`
-	Config      iceberg.Properties `json:"config"`
-	Metadata    table.Metadata     `json:"-"`
+	MetadataLoc        string              `json:"metadata-location"`
+	RawMetadata        json.RawMessage     `json:"metadata"`
+	Config             iceberg.Properties  `json:"config"`
+	Metadata           table.Metadata      `json:"-"`
+	StorageCredentials []storageCredential `json:"storage-credentials,omitempty"`
 }
 
 func (t *loadTableResponse) UnmarshalJSON(b []byte) (err error) {
@@ -816,6 +821,13 @@ func (r *Catalog) LoadTable(ctx context.Context, identifier table.Identifier) (*
 	maps.Copy(config, ret.Metadata.Properties())
 	for k, v := range ret.Config {
 		config[k] = v
+	}
+	if ret.StorageCredentials != nil {
+		for _, cred := range ret.StorageCredentials {
+			for k, v := range cred.Config {
+				config[k] = v
+			}
+		}
 	}
 
 	return r.tableFromResponse(ctx, identifier, ret.Metadata, ret.MetadataLoc, config)
