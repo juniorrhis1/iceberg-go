@@ -109,7 +109,7 @@ func ParseGCSConfig(props map[string]string) (*gcsblob.Options, gcp.TokenSource)
 				keyPath:    props[GCSKeyPath],
 			})
 		} else {
-			tokenSource = oauth2.ReuseTokenSource(oauthToken, oauth2.StaticTokenSource(oauthToken))
+			tokenSource = oauth2.StaticTokenSource(oauthToken)
 		}
 	}
 
