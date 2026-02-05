@@ -87,6 +87,8 @@ Options:
                        	Ex: [{"name":"id","type":"int","required":false,"doc":"unique id"}]
   --properties TEXT 	specify table properties in key=value format (for create table use only)
 						Ex:"format-version=2,write.format.default=parquet"
+  --headers TEXT 	specify request headers in key=value format
+						Ex:"x-goog-user-project=my-project,another-header=header-value"
   --partition-spec TEXT specify partition spec as comma-separated field names(for create table use only)
 						Ex:"field1,field2"
   --sort-order TEXT 	specify sort order as field:direction[:null-order] format(for create table use only)
@@ -134,6 +136,7 @@ type Config struct {
 	LocationURI   string `docopt:"--location-uri"`
 	SchemaStr     string `docopt:"--schema"`
 	TableProps    string `docopt:"--properties"`
+	Headers       string `docopt:"--headers"`
 	PartitionSpec string `docopt:"--partition-spec"`
 	SortOrder     string `docopt:"--sort-order"`
 }
@@ -174,6 +177,20 @@ func main() {
 			opts = append(opts, rest.WithOAuthToken(cfg.Token))
 		} else if len(cfg.Cred) > 0 {
 			opts = append(opts, rest.WithCredential(cfg.Cred))
+		}
+
+		// Parse headers
+		if len(cfg.Headers) > 0 {
+			headerPairs := strings.Split(cfg.Headers, ",")
+			headers := make(map[string]string)
+			for _, pair := range headerPairs {
+				kv := strings.SplitN(pair, "=", 2)
+				if len(kv) != 2 {
+					log.Fatalf("invalid header format: %s", pair)
+				}
+				headers[kv[0]] = kv[1]
+			}
+			opts = append(opts, rest.WithHeaders(headers))
 		}
 
 		if len(cfg.Warehouse) > 0 {
